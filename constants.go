@@ -254,6 +254,7 @@ const (
 	ModeLeader     Mode = iota
 	ModeFollower   Mode = iota
 	ModeStandalone Mode = iota
+	ModeObserver   Mode = iota
 )
 
 var (
@@ -261,5 +262,6 @@ var (
 		ModeLeader:     "leader",
 		ModeFollower:   "follower",
 		ModeStandalone: "standalone",
+		ModeObserver:  "observer",
 	}
 )

@@ -23,7 +23,8 @@ import (
 func FLWSrvr(servers []string, timeout time.Duration) ([]*ServerStats, bool) {
 	// different parts of the regular expression that are required to parse the srvr output
 	const (
-		zrVer   = `^Zookeeper version: ([A-Za-z0-9\.\-]+), built on (\d\d/\d\d/\d\d\d\d \d\d:\d\d [A-Za-z0-9:\+\-]+)`
+		//zrVer = `^Zookeeper version: ([A-Za-z0-9\.\-]+), built on (\d\d/\d\d/\d\d\d\d \d\d:\d\d [A-Za-z0-9:\+\-]+)`
+		zrVer   = `^Zookeeper version: ([A-Za-z0-9\.\-]+), built on (.*)`
 		zrLat   = `^Latency min/avg/max: (\d+)/([0-9.]+)/(\d+)`
 		zrNet   = `^Received: (\d+).*\n^Sent: (\d+).*\n^Connections: (\d+).*\n^Outstanding: (\d+)`
 		zrState = `^Zxid: (0x[A-Za-z0-9]+).*\n^Mode: (\w+).*\n^Node count: (\d+)`
@@ -66,6 +67,8 @@ func FLWSrvr(servers []string, timeout time.Duration) ([]*ServerStats, bool) {
 			srvrMode = ModeLeader
 		case "follower":
 			srvrMode = ModeFollower
+		case "observer":
+			srvrMode = ModeObserver
 		case "standalone":
 			srvrMode = ModeStandalone
 		default:
@@ -73,15 +76,17 @@ func FLWSrvr(servers []string, timeout time.Duration) ([]*ServerStats, bool) {
 		}
 
 		buildTime, err := time.Parse("01/02/2006 15:04 MST", match[1])
-
 		if err != nil {
-			ss[i] = &ServerStats{Error: err}
-			imOk = false
-			continue
+			// compat zookeeper 3.7.0 later
+			buildTime, err = time.Parse("2006-01-02 15:04 MST", match[1])
+			if err != nil {
+				ss[i] = &ServerStats{Error: err}
+				imOk = false
+				continue
+			}
 		}
 
 		parsedInt, err := strconv.ParseInt(match[9], 0, 64)
-
 		if err != nil {
 			ss[i] = &ServerStats{Error: err}
 			imOk = false
